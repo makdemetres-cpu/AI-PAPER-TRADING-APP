@@ -8,7 +8,7 @@ from ..models import SOURCE_NAMES
 
 
 class ProviderError(Exception):
-    """kind is one of: network, rate_limited, not_listed, bad_data, http, blocked."""
+    """kind is one of: network, rate_limited, not_listed, bad_data, http, blocked, auth."""
 
     def __init__(self, source: str, kind: str, message: str):
         self.source = source
@@ -56,6 +56,8 @@ async def get_json(client: httpx.AsyncClient, source: str, url: str, **kwargs):
     except httpx.TransportError as exc:
         raise ProviderError(source, "network", f"Couldn't reach {name}. Check your internet connection.") from exc
 
+    if response.status_code in (401, 403):
+        raise ProviderError(source, "auth", f"{name} rejected the API key. Check it in the .env file.")
     if response.status_code == 429:
         raise ProviderError(source, "rate_limited", f"{name} asked us to slow down (rate limit). We'll retry shortly.")
     if response.status_code == 404:

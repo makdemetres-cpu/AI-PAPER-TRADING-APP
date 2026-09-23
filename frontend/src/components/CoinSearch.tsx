@@ -6,7 +6,8 @@ import { CoinMark } from './bits'
 
 function marketNote(r: SearchResult, currency: 'USD' | 'EUR'): string {
   const direct = r.markets[currency]
-  if (direct.length) return `${currency} on ${direct.map((s) => (s === 'coinbase' ? 'Coinbase' : 'Kraken')).join(' and ')}`
+  if (direct.length)
+    return `${currency} on ${direct.map((s) => (s === 'coinbase' ? 'Coinbase' : 'Kraken')).join(' and ')}`
   if (currency === 'EUR' && r.markets.USD.length) return 'No euro market, price converted from USD'
   return `No ${currency} market`
 }
@@ -75,18 +76,24 @@ export function CoinSearch({ autoFocus = false }: { autoFocus?: boolean }) {
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={onKeyDown}
       />
-      {failure && <p className="small" style={{ color: 'var(--loss)' }}>{failure}</p>}
-      {errors.length > 0 && (
-        <p className="small muted">
-          Some coins may be missing: {errors.map((e) => e.message).join(' ')}
+      {failure && (
+        <p className="small" style={{ color: 'var(--loss)' }}>
+          {failure}
         </p>
+      )}
+      {errors.length > 0 && (
+        <p className="small muted">Some coins may be missing: {errors.map((e) => e.message).join(' ')}</p>
       )}
       {results && results.length === 0 && (
         <p className="empty small">No coin matches “{query}” on Coinbase or Kraken.</p>
       )}
       {results && results.length > 0 && (
         <div>
-          {!query && <p className="small muted" style={{ marginBottom: 8 }}>Popular coins</p>}
+          {!query && (
+            <p className="small muted" style={{ marginBottom: 8 }}>
+              Popular coins
+            </p>
+          )}
           <ul className="list" id={listId} role="listbox">
             {results.map((r, i) => (
               <li key={r.symbol} role="option" id={`${listId}-${i}`} aria-selected={i === active}>

@@ -1,4 +1,5 @@
 import { CoinSearch } from '../components/CoinSearch'
+import { WatchlistsCard } from '../components/Watchlists'
 
 export function Research() {
   return (
@@ -10,6 +11,7 @@ export function Research() {
       <section className="card">
         <CoinSearch autoFocus />
       </section>
+      <WatchlistsCard />
     </>
   )
 }

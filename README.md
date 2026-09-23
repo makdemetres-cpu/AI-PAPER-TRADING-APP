@@ -8,19 +8,25 @@ with pretend money. It never places real trades.
 
 ## What works so far
 
-The app is being built in stages. Stage 1 is done:
+The app is being built in stages. Stages 1 and 2 are done.
 
+**Research**
 - Search any coin traded on Coinbase or Kraken.
 - A coin page with the price, the 24-hour change, high, low, volume, bid and ask.
 - A price chart for 1 day, 1 week, 1 month, 1 year and 5 years, as a line or as candles.
+- Coin facts from CoinGecko: market cap, rank, circulating, total and max supply, fully diluted value and all-time high.
+- News headlines from Benzinga (needs a free Alpaca key), with the outlet and when each story was published.
+- Watchlists: make as many lists as you like, add coins from any coin page, and see each coin's price and freshness at a glance.
+- A **?** next to every money word. Click it for a plain explanation, a proper definition and an example.
+
+**Honest data**
 - Prices in US dollars or euros (switch at the top right).
 - A label on every price: **Live**, **Stale**, **End of day** or **No data**, plus the exchange, the market and the time.
 - A **price check** that compares Coinbase with Kraken and Alpaca and warns you if they disagree by more than 0.5%.
 - Warnings for impossible prices, missing volume, unusual 24-hour moves, stablecoins losing their peg, and exchanges that don't answer.
 - Exchange status for Coinbase and Kraken on the Home page.
-- Light and dark mode.
 
-Still to come: news and watchlists, paper trading, the Learn the Words glossary, the AI assistant, and
+Still to come: paper trading, the full Learn the Words glossary with pictures, the AI assistant, and
 copy-trading research (fund holdings and Congress trades).
 
 ## Start the app (Windows)
@@ -44,13 +50,13 @@ Double-click **Check Data Sources.bat**. It asks each exchange for a price and a
 ## Settings file (.env)
 
 The first start creates a file called `.env` in the app folder. Open it with Notepad to add optional keys.
-The app works without any of them in Stage 1.
+The app works without any of them; each one turns on an extra feature.
 
 | Setting | Needed for | How to get it |
 |---|---|---|
 | `SEC_CONTACT_EMAIL` | Fund holdings (later stage) | Your email. The SEC requires apps to identify themselves. It is only sent to sec.gov. |
-| `ALPACA_API_KEY_ID`, `ALPACA_API_SECRET_KEY` | Higher Alpaca limits; news (later stage) | Sign up at [alpaca.markets](https://alpaca.markets), open the **Paper** account, and create API keys. Paper keys start with `PK`. |
-| `COINGECKO_DEMO_API_KEY` | Coin supply and market cap (later stage) | Free Demo key at [coingecko.com/en/api](https://www.coingecko.com/en/api). |
+| `ALPACA_API_KEY_ID`, `ALPACA_API_SECRET_KEY` | News, and higher Alpaca limits | Sign up at [alpaca.markets](https://alpaca.markets), open the **Paper** account, and create API keys. Paper keys start with `PK`. |
+| `COINGECKO_DEMO_API_KEY` | Coin facts. Without a key, CoinGecko may slow down or refuse requests. | Free Demo key at [coingecko.com/en/api](https://www.coingecko.com/en/api). |
 | `ANTHROPIC_API_KEY` | AI assistant with Claude (later stage) | [console.anthropic.com](https://console.anthropic.com). Costs a little per question. |
 | `OLLAMA_URL` | AI assistant with a local model (later stage) | Install [Ollama](https://ollama.com). The default address works. |
 
@@ -72,6 +78,8 @@ The app works without any of them in Stage 1.
 | Prices, 24-hour numbers, charts | [Coinbase Exchange](https://docs.cdp.coinbase.com/exchange/introduction/welcome) public API | Main source. Real-time, no key needed. |
 | Second price and backup chart | [Kraken](https://docs.kraken.com/api/) public API | Used for the price check, and instead of Coinbase if Coinbase doesn't answer. |
 | Third price | [Alpaca](https://docs.alpaca.markets/docs/historical-crypto-data-1) crypto data | US dollar markets only. Market data only, never trading. |
+| Coin facts (market cap, supply, all-time high) | [CoinGecko](https://docs.coingecko.com/) | Combines many exchanges. Its euro figures are its own conversion. |
+| News | [Benzinga](https://www.benzinga.com) via Alpaca's news API | Needs a free Alpaca paper-account key. |
 | Euro conversion | [European Central Bank](https://data.ecb.europa.eu/) daily reference rate | Used only when a coin has no euro market. |
 | Exchange status | status.coinbase.com and Kraken's system status | |
 
@@ -103,10 +111,12 @@ uv run pytest                 # backend tests
 cd frontend && npm install
 npm run dev                   # frontend dev server on :5173, proxies /api to :8765
 npm run build                 # builds into server/web, which the app serves
+npm run format                # Prettier
 ```
 
-- Backend: Python, FastAPI, httpx, SQLite (`data/app.db`). Code in `server/`.
+- Backend: Python, FastAPI, httpx, SQLite (`data/app.db`, holds settings and watchlists). Code in `server/`.
 - Frontend: React, TypeScript, Vite, [TradingView Lightweight Charts](https://github.com/tradingview/lightweight-charts). Code in `frontend/`.
 - `server/web` holds the built frontend and is committed, so people running the app don't need Node.
+- Glossary words live in `frontend/src/glossary/terms.ts`. Add a term there and use `<Term id="..." />`.
 - Tests use fake exchanges in `tests/fakes.py` whose replies follow each provider's documented format.
   `python -m server.check` tests the real services.

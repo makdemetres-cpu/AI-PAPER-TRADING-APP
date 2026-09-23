@@ -8,11 +8,12 @@ import httpx
 
 from .cache import TimedCache
 from .checks import STABLECOIN_PEGS, cross_check, sanity_check_candles, sanity_check_quote
-from .freshness import Freshness, FreshnessInfo, classify_quote, classify_series
+from .freshness import Freshness, FreshnessInfo, classify_quote, classify_series, human_duration
 from .models import SOURCE_NAMES, Candle, CandleSeries, FxRate, Notice, Quote
 from .providers.alpaca import AlpacaProvider
 from .providers.base import ProviderError
 from .providers.coinbase import CoinbaseProvider
+from .providers.coingecko import CoinGeckoProvider
 from .providers.ecb import EcbProvider
 from .providers.kraken import KrakenProvider
 
@@ -26,6 +27,9 @@ PARTIAL_UNIVERSE_TTL = 60
 QUOTE_TTL = 5
 FX_TTL = 60 * 60
 FX_STALE_DAYS = 4
+INFO_TTL = 10 * 60
+INFO_STALE_AFTER = 30 * 60
+NEWS_TTL = 5 * 60
 
 
 class NotFoundError(Exception):
@@ -89,6 +93,7 @@ class MarketService:
         *,
         alpaca_key_id: str = "",
         alpaca_secret: str = "",
+        coingecko_key: str = "",
         clock=lambda: datetime.now(timezone.utc),
     ):
         self.clock = clock
@@ -97,6 +102,7 @@ class MarketService:
         self.kraken = KrakenProvider(client, clock)
         self.alpaca = AlpacaProvider(client, alpaca_key_id, alpaca_secret, clock)
         self.ecb = EcbProvider(client, clock)
+        self.coingecko = CoinGeckoProvider(client, coingecko_key, clock)
         self._universe_lock = asyncio.Lock()
 
     def _cached_universe(self):
@@ -578,3 +584,121 @@ class MarketService:
                 }
             out.append(entry)
         return out
+
+    async def coin_info(self, symbol: str, currency: str) -> dict:
+        currency = currency.upper()
+        if currency not in CURRENCIES:
+            raise NotFoundError(f"Currency {currency} isn't supported. Use USD or EUR.")
+        asset, notices = await self.asset(symbol)
+        now = self.clock()
+        key = ("info", asset.symbol, currency)
+        info = self.cache.fresh(key, INFO_TTL)
+        errors: list[dict] = []
+        from_cache = False
+        if info is None:
+            try:
+                info = await self.coingecko.market(asset.symbol, currency)
+                self.cache.put(key, info)
+            except ProviderError as err:
+                if err.kind != "not_listed":
+                    errors.append(error_dict(err, now))
+                previous = self.cache.last(key)
+                if previous:
+                    info, from_cache = previous[0], True
+                    notices.append(Notice(
+                        "refresh_failed", "danger",
+                        f"Couldn't refresh from CoinGecko at {local_time(now)}. "
+                        f"Showing numbers fetched at {local_time(previous[1])}.",
+                    ))
+                elif err.kind == "not_listed":
+                    notices.append(Notice("not_listed", "info", str(err)))
+
+        if info is None:
+            return {
+                "symbol": asset.symbol, "currency": currency, "info": None, "source": None,
+                "freshness": FreshnessInfo(Freshness.UNAVAILABLE, None, "No coin facts are available.").as_dict(),
+                "notices": [n.as_dict() for n in notices], "errors": errors, "checked_at": iso(now),
+            }
+
+        if info["name"] and not _same_coin_name(info["name"], asset.name, asset.symbol):
+            notices.append(Notice(
+                "name_mismatch", "warning",
+                f"CoinGecko matched {asset.symbol} to \u201c{info['name']}\u201d, but the exchanges call it "
+                f"\u201c{asset.name}\u201d. They may be different coins that share a symbol.",
+            ))
+
+        updated = info["last_updated"]
+        if updated is None:
+            freshness = FreshnessInfo(Freshness.UNAVAILABLE, None, "CoinGecko didn't say when these numbers were updated.")
+        else:
+            age = max((now - updated).total_seconds(), 0.0)
+            if from_cache or age > INFO_STALE_AFTER:
+                freshness = FreshnessInfo(Freshness.STALE, age, f"CoinGecko updated these numbers {human_duration(age)} ago.")
+            else:
+                freshness = FreshnessInfo(Freshness.LIVE, age, f"CoinGecko updated these numbers {human_duration(age)} ago.")
+
+        return {
+            "symbol": asset.symbol,
+            "currency": currency,
+            "info": {
+                **{k: v for k, v in info.items() if k not in ("ath_date", "last_updated", "fetched_at")},
+                "ath_date": iso(info["ath_date"]),
+                "last_updated": iso(updated),
+            },
+            "source": {
+                "id": "coingecko",
+                "name": "CoinGecko",
+                "url": f"https://www.coingecko.com/en/coins/{info['coingecko_id']}",
+                "fetched_at": iso(info["fetched_at"]),
+                "from_cache": from_cache,
+            },
+            "freshness": freshness.as_dict(),
+            "notices": [n.as_dict() for n in notices],
+            "errors": errors,
+            "checked_at": iso(now),
+        }
+
+    async def news(self, symbol: str) -> dict:
+        asset, _ = await self.asset(symbol)
+        now = self.clock()
+        if not self.alpaca.has_key:
+            return {
+                "symbol": asset.symbol, "available": False,
+                "reason": "News needs a free Alpaca paper-account key. The README explains how to get one.",
+                "items": [], "source": None, "errors": [], "checked_at": iso(now),
+            }
+        key = ("news", asset.symbol)
+        items = self.cache.fresh(key, NEWS_TTL)
+        errors: list[dict] = []
+        from_cache = False
+        fetched_at = now
+        if items is None:
+            try:
+                items = await self.alpaca.news(asset.symbol)
+                self.cache.put(key, items)
+            except ProviderError as err:
+                errors.append(error_dict(err, now))
+                previous = self.cache.last(key)
+                if previous:
+                    items, from_cache, fetched_at = previous[0], True, previous[1]
+        else:
+            fetched_at = self.cache.last(key)[1]
+
+        return {
+            "symbol": asset.symbol,
+            "available": items is not None,
+            "reason": None if items is not None else "Couldn't load news right now.",
+            "items": [
+                {**i, "published_at": iso(i["published_at"]), "updated_at": iso(i["updated_at"])} for i in items or []
+            ],
+            "source": {"id": "alpaca", "name": "Benzinga via Alpaca", "fetched_at": iso(fetched_at), "from_cache": from_cache},
+            "errors": errors,
+            "checked_at": iso(now),
+        }
+
+
+def _same_coin_name(a: str, b: str, symbol: str) -> bool:
+    x, y = a.casefold().strip(), b.casefold().strip()
+    if y == symbol.casefold():
+        return True
+    return x == y or x in y or y in x

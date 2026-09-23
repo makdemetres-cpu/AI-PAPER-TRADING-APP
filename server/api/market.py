@@ -24,6 +24,16 @@ async def candles(request: Request, symbol: str = Symbol, currency: Currency = "
     return await request.app.state.market.candles_report(symbol, currency, range)
 
 
+@router.get("/assets/{symbol}/info")
+async def info(request: Request, symbol: str = Symbol, currency: Currency = "USD"):
+    return await request.app.state.market.coin_info(symbol, currency)
+
+
+@router.get("/assets/{symbol}/news")
+async def news(request: Request, symbol: str = Symbol):
+    return await request.app.state.market.news(symbol)
+
+
 @router.get("/exchanges/status")
 async def exchange_status(request: Request):
     return {"exchanges": await request.app.state.market.exchange_status()}

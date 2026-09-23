@@ -62,3 +62,23 @@ export function intervalLabel(seconds: number | null): string {
   }
   return labels[seconds] ?? `${Math.round(seconds / 60)}-minute points`
 }
+
+export function bigMoney(value: number | null | undefined, currency: Currency): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return '—'
+  return new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency,
+    notation: 'compact',
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
+export function bigAmount(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return '—'
+  return new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 2 }).format(value)
+}
+
+export function day(iso: string | null | undefined): string {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+}

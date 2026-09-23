@@ -29,7 +29,9 @@ function Page({ path }: { path: string }) {
     case '/research':
       return <Research />
     case '/paper':
-      return <Later title="Paper Trading" summary="Practice buying and selling with pretend money, using real prices." />
+      return (
+        <Later title="Paper Trading" summary="Practice buying and selling with pretend money, using real prices." />
+      )
     case '/copy':
       return (
         <Later
@@ -38,9 +40,16 @@ function Page({ path }: { path: string }) {
         />
       )
     case '/assistant':
-      return <Later title="AI Assistant" summary="Ask questions about a coin. Answers use only data the app fetched, with sources." />
+      return (
+        <Later
+          title="AI Assistant"
+          summary="Ask questions about a coin. Answers use only data the app fetched, with sources."
+        />
+      )
     case '/learn':
-      return <Later title="Learn the Words" summary="Every trading word the app uses, explained simply with a picture." />
+      return (
+        <Later title="Learn the Words" summary="Every trading word the app uses, explained simply with a picture." />
+      )
     case '/settings':
       return <Settings />
     default:
@@ -74,7 +83,11 @@ export function App() {
       </aside>
       <div className="main">
         <header className="topbar">
-          {currencyError && <span className="xsmall" style={{ color: 'var(--loss)' }}>{currencyError}</span>}
+          {currencyError && (
+            <span className="xsmall" style={{ color: 'var(--loss)' }}>
+              {currencyError}
+            </span>
+          )}
           <CurrencyToggle />
           <ThemeToggle />
         </header>

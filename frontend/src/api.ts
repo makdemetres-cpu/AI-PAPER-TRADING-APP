@@ -111,6 +111,59 @@ export interface ExchangeStatus {
   error: string | null
 }
 
+export interface CoinInfoReport {
+  symbol: string
+  currency: Currency
+  info: {
+    coingecko_id: string
+    name: string
+    symbol: string
+    rank: number | null
+    price: number | null
+    market_cap: number | null
+    fully_diluted_valuation: number | null
+    circulating_supply: number | null
+    total_supply: number | null
+    max_supply: number | null
+    ath: number | null
+    ath_date: string | null
+    last_updated: string | null
+  } | null
+  source: { id: string; name: string; url: string; fetched_at: string; from_cache: boolean } | null
+  freshness: Freshness
+  notices: Notice[]
+  errors: SourceError[]
+  checked_at: string
+}
+
+export interface NewsItem {
+  id: string
+  headline: string
+  summary: string
+  outlet: string
+  author: string
+  url: string
+  published_at: string
+  updated_at: string | null
+}
+
+export interface NewsReport {
+  symbol: string
+  available: boolean
+  reason: string | null
+  items: NewsItem[]
+  source: { id: string; name: string; fetched_at: string; from_cache: boolean } | null
+  errors: SourceError[]
+  checked_at: string
+}
+
+export interface Watchlist {
+  id: number
+  name: string
+  created_at: string
+  items: { symbol: string; added_at: string }[]
+}
+
 export interface Settings {
   currency: Currency
 }
@@ -133,27 +186,42 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   } catch {
     throw new ApiError(0, 'The app’s local server isn’t responding. Is the Crypto Paper Trader window still open?')
   }
-  const body = await response.json().catch(() => null)
+  const body = response.status === 204 ? null : await response.json().catch(() => null)
   if (!response.ok) {
-    const detail = typeof body?.detail === 'string' ? body.detail : `Request failed (HTTP ${response.status}).`
+    const detail =
+      typeof body?.detail === 'string'
+        ? body.detail
+        : Array.isArray(body?.detail)
+          ? 'That input isn’t valid.'
+          : `Request failed (HTTP ${response.status}).`
     throw new ApiError(response.status, detail, body?.errors ?? [])
   }
   return body as T
 }
 
+function json(method: string, body: unknown): RequestInit {
+  return { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+}
+
 export const api = {
   settings: () => request<Settings>('/api/settings'),
-  saveSettings: (values: Partial<Settings>) =>
-    request<Settings>('/api/settings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(values),
-    }),
+  saveSettings: (values: Partial<Settings>) => request<Settings>('/api/settings', json('PUT', values)),
   search: (q: string) =>
     request<{ results: SearchResult[]; errors: SourceError[] }>(`/api/assets/search?q=${encodeURIComponent(q)}`),
   quote: (symbol: string, currency: Currency) =>
     request<QuoteReport>(`/api/assets/${encodeURIComponent(symbol)}/quote?currency=${currency}`),
   candles: (symbol: string, currency: Currency, range: RangeKey) =>
     request<CandleReport>(`/api/assets/${encodeURIComponent(symbol)}/candles?currency=${currency}&range=${range}`),
+  info: (symbol: string, currency: Currency) =>
+    request<CoinInfoReport>(`/api/assets/${encodeURIComponent(symbol)}/info?currency=${currency}`),
+  news: (symbol: string) => request<NewsReport>(`/api/assets/${encodeURIComponent(symbol)}/news`),
+  watchlists: () => request<{ watchlists: Watchlist[] }>('/api/watchlists'),
+  createWatchlist: (name: string) => request<Watchlist>('/api/watchlists', json('POST', { name })),
+  renameWatchlist: (id: number, name: string) => request<Watchlist>(`/api/watchlists/${id}`, json('PATCH', { name })),
+  deleteWatchlist: (id: number) => request<null>(`/api/watchlists/${id}`, { method: 'DELETE' }),
+  addToWatchlist: (id: number, symbol: string) =>
+    request<Watchlist>(`/api/watchlists/${id}/items`, json('POST', { symbol })),
+  removeFromWatchlist: (id: number, symbol: string) =>
+    request<Watchlist>(`/api/watchlists/${id}/items/${encodeURIComponent(symbol)}`, { method: 'DELETE' }),
   exchangeStatus: () => request<{ exchanges: ExchangeStatus[] }>('/api/exchanges/status'),
 }

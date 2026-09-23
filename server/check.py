@@ -14,7 +14,12 @@ async def run_checks() -> int:
     enforce(settings)
     failures = 0
     async with make_client() as client:
-        service = MarketService(client, alpaca_key_id=settings.alpaca_key_id, alpaca_secret=settings.alpaca_secret)
+        service = MarketService(
+            client,
+            alpaca_key_id=settings.alpaca_key_id,
+            alpaca_secret=settings.alpaca_secret,
+            coingecko_key=settings.coingecko_key,
+        )
 
         def show(ok: bool, label: str, detail: str) -> None:
             nonlocal failures
@@ -43,6 +48,20 @@ async def run_checks() -> int:
             source = chart["source"]["name"] if chart["source"] else "none"
             show(bool(chart["candles"]), f"BTC chart {range_key}",
                  f"{len(chart['candles'])} points from {source}, {chart['freshness']['label']}")
+
+        facts = await service.coin_info("BTC", "USD")
+        show(facts["info"] is not None, "CoinGecko coin facts",
+             f"market cap {facts['info']['market_cap']}" if facts["info"] else "no data")
+        for err in facts["errors"]:
+            show(False, err["source_name"], err["message"])
+
+        news = await service.news("BTC")
+        if news["available"]:
+            show(True, "News", f"{len(news['items'])} BTC headlines from {news['source']['name']}")
+        else:
+            print(f"  [SKIPPED] News: {news['reason']}")
+        for err in news["errors"]:
+            show(False, err["source_name"], err["message"])
 
         for status in await service.exchange_status():
             show(status["error"] is None, f"{status['source_name']} status", status["description"])

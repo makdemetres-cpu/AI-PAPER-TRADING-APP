@@ -1,6 +1,7 @@
 import json
 import sqlite3
 import threading
+from datetime import datetime, timezone
 from pathlib import Path
 
 MIGRATIONS = [
@@ -10,9 +11,26 @@ MIGRATIONS = [
         value TEXT NOT NULL
     );
     """,
+    """
+    CREATE TABLE watchlists (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        created_at TEXT NOT NULL
+    );
+    CREATE TABLE watchlist_items (
+        watchlist_id INTEGER NOT NULL REFERENCES watchlists(id) ON DELETE CASCADE,
+        symbol TEXT NOT NULL,
+        added_at TEXT NOT NULL,
+        PRIMARY KEY (watchlist_id, symbol)
+    );
+    """,
 ]
 
 DEFAULT_SETTINGS = {"currency": "USD"}
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 class Database:
@@ -47,6 +65,49 @@ class Database:
                     (key, json.dumps(value)),
                 )
         return self.get_settings()
+
+    def list_watchlists(self) -> list[dict]:
+        with self.lock:
+            lists = self.conn.execute("SELECT id, name, created_at FROM watchlists ORDER BY id").fetchall()
+            items = self.conn.execute(
+                "SELECT watchlist_id, symbol, added_at FROM watchlist_items ORDER BY added_at, symbol"
+            ).fetchall()
+        by_list: dict[int, list[dict]] = {}
+        for row in items:
+            by_list.setdefault(row["watchlist_id"], []).append({"symbol": row["symbol"], "added_at": row["added_at"]})
+        return [{**dict(row), "items": by_list.get(row["id"], [])} for row in lists]
+
+    def get_watchlist(self, watchlist_id: int) -> dict | None:
+        return next((w for w in self.list_watchlists() if w["id"] == watchlist_id), None)
+
+    def create_watchlist(self, name: str) -> dict:
+        with self.lock, self.conn:
+            cursor = self.conn.execute("INSERT INTO watchlists (name, created_at) VALUES (?, ?)", (name, _now()))
+        return self.get_watchlist(cursor.lastrowid)
+
+    def rename_watchlist(self, watchlist_id: int, name: str) -> dict | None:
+        with self.lock, self.conn:
+            self.conn.execute("UPDATE watchlists SET name = ? WHERE id = ?", (name, watchlist_id))
+        return self.get_watchlist(watchlist_id)
+
+    def delete_watchlist(self, watchlist_id: int) -> bool:
+        with self.lock, self.conn:
+            return self.conn.execute("DELETE FROM watchlists WHERE id = ?", (watchlist_id,)).rowcount > 0
+
+    def add_watchlist_item(self, watchlist_id: int, symbol: str) -> dict | None:
+        with self.lock, self.conn:
+            self.conn.execute(
+                "INSERT OR IGNORE INTO watchlist_items (watchlist_id, symbol, added_at) VALUES (?, ?, ?)",
+                (watchlist_id, symbol, _now()),
+            )
+        return self.get_watchlist(watchlist_id)
+
+    def remove_watchlist_item(self, watchlist_id: int, symbol: str) -> dict | None:
+        with self.lock, self.conn:
+            self.conn.execute(
+                "DELETE FROM watchlist_items WHERE watchlist_id = ? AND symbol = ?", (watchlist_id, symbol)
+            )
+        return self.get_watchlist(watchlist_id)
 
     def close(self) -> None:
         self.conn.close()

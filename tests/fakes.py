@@ -1,4 +1,4 @@
-"""Fake Coinbase, Kraken, Alpaca and ECB servers.
+"""Fake Coinbase, Kraken, Alpaca, CoinGecko and ECB servers.
 
 Reply shapes follow each provider's public API documentation. The tests can
 switch a provider off, change its price, or age its last trade.
@@ -23,6 +23,8 @@ class FakeMarkets:
     kraken_up: bool = True
     alpaca_up: bool = True
     ecb_up: bool = True
+    coingecko_up: bool = True
+    coingecko_names: dict = field(default_factory=lambda: {"btc": "Bitcoin", "eth": "Ethereum", "sol": "Solana"})
     coinbase_rate_limited: bool = False
     prices: dict = field(default_factory=lambda: {
         ("coinbase", "BTC-USD"): 65000.0,
@@ -61,6 +63,8 @@ class FakeMarkets:
             return self._alpaca(request)
         if host == "data-api.ecb.europa.eu":
             return self._ecb(request)
+        if host == "api.coingecko.com":
+            return self._coingecko(request)
         return httpx.Response(404)
 
     def _trade_time(self) -> datetime:
@@ -157,6 +161,17 @@ class FakeMarkets:
     def _alpaca(self, request: httpx.Request) -> httpx.Response:
         if not self.alpaca_up:
             raise httpx.ConnectError("down", request=request)
+        if request.url.path == "/v1beta1/news":
+            if request.headers.get("APCA-API-KEY-ID") != "PKTEST":
+                return httpx.Response(401, json={"message": "forbidden"})
+            symbol = parse_qs(request.url.query.decode())["symbols"][0]
+            return httpx.Response(200, json={"news": [
+                {"id": 2, "headline": "Bitcoin &amp; ether rise", "author": "A. Writer", "source": "benzinga",
+                 "created_at": "2026-09-23T11:00:00Z", "updated_at": "2026-09-23T11:05:00Z",
+                 "summary": "<p>Prices <b>rose</b> today.</p>", "url": "https://www.benzinga.com/a", "symbols": [symbol]},
+                {"id": 1, "headline": "Bad link", "source": "benzinga", "created_at": "2026-09-23T10:00:00Z",
+                 "url": "javascript:alert(1)", "symbols": [symbol]},
+            ], "next_page_token": None})
         symbols = parse_qs(request.url.query.decode()).get("symbols", [""])[0]
         trades = {}
         price = self.prices.get(("alpaca", symbols))
@@ -182,3 +197,20 @@ class FakeMarkets:
                 d += timedelta(days=1)
         lines = [header] + [f"EXR.D.USD.EUR.SP00.A,D,USD,EUR,SP00,A,{d},{self.usd_per_eur},A" for d in dates]
         return httpx.Response(200, text="\n".join(lines) + "\n", headers={"Content-Type": "text/csv"})
+
+    def _coingecko(self, request: httpx.Request) -> httpx.Response:
+        if not self.coingecko_up:
+            raise httpx.ConnectError("down", request=request)
+        params = parse_qs(request.url.query.decode())
+        symbol = params["symbols"][0]
+        name = self.coingecko_names.get(symbol)
+        if not name:
+            return httpx.Response(200, json=[])
+        factor = 1.0 if params["vs_currency"][0] == "usd" else 1 / self.usd_per_eur
+        return httpx.Response(200, json=[{
+            "id": name.lower(), "symbol": symbol, "name": name, "current_price": 65000 * factor,
+            "market_cap": 1.29e12 * factor, "market_cap_rank": 1, "fully_diluted_valuation": 1.36e12 * factor,
+            "circulating_supply": 19900000.0, "total_supply": 19900000.0, "max_supply": 21000000.0,
+            "ath": 124000 * factor, "ath_date": "2025-10-06T00:00:00.000Z",
+            "last_updated": iso_z(NOW - timedelta(minutes=2)),
+        }])

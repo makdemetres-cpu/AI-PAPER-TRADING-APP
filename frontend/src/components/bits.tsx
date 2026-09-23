@@ -12,7 +12,8 @@ export function FreshnessBadge({ freshness }: { freshness: Freshness }) {
 }
 
 export function Change({ pct, suffix, missing }: { pct: number | null; suffix?: string; missing?: string }) {
-  if (pct === null || !Number.isFinite(pct)) return <span className="change-flat">{missing ?? 'Change not available'}</span>
+  if (pct === null || !Number.isFinite(pct))
+    return <span className="change-flat">{missing ?? 'Change not available'}</span>
   const dir = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat'
   const arrow = dir === 'up' ? '▲' : dir === 'down' ? '▼' : '■'
   const words = dir === 'up' ? 'up' : dir === 'down' ? 'down' : 'unchanged'
@@ -50,9 +51,7 @@ export function SourceErrors({ errors }: { errors: SourceError[] }) {
   if (!errors.length) return null
   return (
     <details className="small muted">
-      <summary>
-        {errors.length === 1 ? '1 source had a problem' : `${errors.length} sources had problems`}
-      </summary>
+      <summary>{errors.length === 1 ? '1 source had a problem' : `${errors.length} sources had problems`}</summary>
       <ul>
         {errors.map((e) => (
           <li key={e.source + e.at + e.message}>

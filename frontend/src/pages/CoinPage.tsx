@@ -1,8 +1,12 @@
 import { useState } from 'react'
 import { api, type CandleReport, type QuoteReport, type RangeKey } from '../api'
 import { Change, CoinMark, FreshnessBadge, Notices, SourceErrors } from '../components/bits'
+import { CoinFacts } from '../components/CoinFacts'
 import { CoinSearch } from '../components/CoinSearch'
+import { News } from '../components/News'
 import { PriceChart, type ChartStyle } from '../components/PriceChart'
+import { Term } from '../components/Term'
+import { WatchlistButton } from '../components/Watchlists'
 import { ago, amount, clockTime, intervalLabel, money } from '../format'
 import { useApi, useNow } from '../hooks'
 import { usePrefs } from '../prefs'
@@ -49,14 +53,26 @@ export function CoinPage({ symbol }: { symbol: string }) {
       </nav>
       <div className="grid-2">
         <div className="stack" style={{ gap: 24 }}>
-          <PriceHeader symbol={symbol} report={quote.data} loading={quote.loading} refreshError={quote.error?.message ?? null} now={now} />
+          <PriceHeader
+            symbol={symbol}
+            report={quote.data}
+            loading={quote.loading}
+            refreshError={quote.error?.message ?? null}
+            now={now}
+          />
           <section className="card" aria-labelledby="chart-title">
             <div className="card-head">
               <h2 id="chart-title">Price chart</h2>
               <div className="row">
                 <div className="segmented" role="group" aria-label="Time range">
                   {RANGES.map((r) => (
-                    <button key={r} type="button" aria-pressed={range === r} onClick={() => setRange(r)} title={RANGE_NAMES[r]}>
+                    <button
+                      key={r}
+                      type="button"
+                      aria-pressed={range === r}
+                      onClick={() => setRange(r)}
+                      title={RANGE_NAMES[r]}
+                    >
                       {r}
                     </button>
                   ))}
@@ -69,14 +85,19 @@ export function CoinPage({ symbol }: { symbol: string }) {
                     Candles
                   </button>
                 </div>
+                <Term id={style === 'line' ? 'line-chart' : 'candlestick'}>
+                  <span className="visually-hidden">{style === 'line' ? 'Line chart' : 'Candlestick chart'}</span>
+                </Term>
               </div>
             </div>
             <ChartBody report={chart.data} loading={chart.loading} error={chart.error?.message ?? null} style={style} />
           </section>
+          <News symbol={symbol} name={quote.data?.name ?? symbol} />
         </div>
         <div className="stack" style={{ gap: 24 }}>
           <DayStats report={quote.data} />
           <PriceCheck report={quote.data} />
+          <CoinFacts symbol={symbol} />
         </div>
       </div>
     </>
@@ -99,21 +120,29 @@ function PriceHeader({
   const { currency } = usePrefs()
   return (
     <section className="card stack" aria-labelledby="coin-title">
-      <div className="row">
-        <CoinMark symbol={symbol} />
-        <h1 id="coin-title">
-          {report && report.name !== symbol ? (
-            <>
-              {report.name} <span className="muted" style={{ fontWeight: 500 }}>{symbol}</span>
-            </>
-          ) : (
-            symbol
-          )}
-        </h1>
+      <div className="row" style={{ justifyContent: 'space-between' }}>
+        <div className="row">
+          <CoinMark symbol={symbol} />
+          <h1 id="coin-title">
+            {report && report.name !== symbol ? (
+              <>
+                {report.name}{' '}
+                <span className="muted" style={{ fontWeight: 500 }}>
+                  {symbol}
+                </span>
+              </>
+            ) : (
+              symbol
+            )}
+          </h1>
+        </div>
+        <WatchlistButton symbol={symbol} />
       </div>
 
       {!report && loading && <div className="skeleton" style={{ height: 52, width: 260 }} />}
-      {!report && !loading && refreshError && <Notices notices={[{ code: 'load', level: 'danger', message: refreshError }]} />}
+      {!report && !loading && refreshError && (
+        <Notices notices={[{ code: 'load', level: 'danger', message: refreshError }]} />
+      )}
 
       {report && (
         <>
@@ -128,17 +157,21 @@ function PriceHeader({
             )}
             {report.price && (
               <p style={{ marginTop: 6 }}>
-                <Change
-                  pct={report.price.change_24h_pct}
-                  suffix="in the last 24 hours"
-                  missing={`24-hour change not given by ${report.source?.name ?? 'this source'}`}
-                />
+                <Term id="change-24h">
+                  <Change
+                    pct={report.price.change_24h_pct}
+                    suffix="in the last 24 hours"
+                    missing={`24-hour change not given by ${report.source?.name ?? 'this source'}`}
+                  />
+                </Term>
               </p>
             )}
           </div>
 
           <div className="source-line">
-            <FreshnessBadge freshness={report.freshness} />
+            <Term id={report.freshness.status === 'live' ? 'live-data' : 'stale-data'}>
+              <FreshnessBadge freshness={report.freshness} />
+            </Term>
             {report.source && (
               <>
                 <span>
@@ -194,7 +227,9 @@ function ChartBody({
   if (!report) {
     return (
       <div className="chart-box">
-        <div className="chart-empty">{loading ? <div className="skeleton" style={{ inset: 0, position: 'absolute' }} /> : error}</div>
+        <div className="chart-empty">
+          {loading ? <div className="skeleton" style={{ inset: 0, position: 'absolute' }} /> : error}
+        </div>
       </div>
     )
   }
@@ -228,7 +263,11 @@ function ChartBody({
       </div>
       <p className="xsmall muted">{report.freshness.detail}</p>
       {error && (
-        <Notices notices={[{ code: 'local', level: 'danger', message: `${error} This chart is from ${clockTime(report.checked_at)}.` }]} />
+        <Notices
+          notices={[
+            { code: 'local', level: 'danger', message: `${error} This chart is from ${clockTime(report.checked_at)}.` },
+          ]}
+        />
       )}
       <Notices notices={report.notices} />
       <SourceErrors errors={report.errors} />
@@ -241,7 +280,8 @@ function DayStats({ report }: { report: QuoteReport | null }) {
   const p = report?.price
   const spread = p?.bid && p?.ask ? p.ask - p.bid : null
   const missing = report?.source ? `Not given by ${report.source.name}` : '—'
-  const show = (v: number | null | undefined) => (v === null || v === undefined ? <span className="faint small">{missing}</span> : money(v, currency))
+  const show = (v: number | null | undefined) =>
+    v === null || v === undefined ? <span className="faint small">{missing}</span> : money(v, currency)
   return (
     <section className="card" aria-labelledby="day-title">
       <div className="card-head">
@@ -254,13 +294,19 @@ function DayStats({ report }: { report: QuoteReport | null }) {
       ) : (
         <>
           <dl className="stat-list">
-            <dt>High</dt>
+            <dt>
+              <Term id="high-low">High</Term>
+            </dt>
             <dd>{show(p.high_24h)}</dd>
-            <dt>Low</dt>
+            <dt>
+              <Term id="high-low">Low</Term>
+            </dt>
             <dd>{show(p.low_24h)}</dd>
             <dt>Price 24 hours ago</dt>
             <dd>{show(p.open_24h)}</dd>
-            <dt>Volume</dt>
+            <dt>
+              <Term id="volume" />
+            </dt>
             <dd>
               {p.volume_24h === null ? (
                 <span className="faint small">{missing}</span>
@@ -268,14 +314,24 @@ function DayStats({ report }: { report: QuoteReport | null }) {
                 `${amount(p.volume_24h)} ${report.symbol}`
               )}
             </dd>
-            <dt>Best bid (buyers)</dt>
+            <dt>
+              <Term id="bid">Bid (buyers)</Term>
+            </dt>
             <dd>{show(p.bid)}</dd>
-            <dt>Best ask (sellers)</dt>
+            <dt>
+              <Term id="ask">Ask (sellers)</Term>
+            </dt>
             <dd>{show(p.ask)}</dd>
-            <dt>Spread</dt>
+            <dt>
+              <Term id="spread" />
+            </dt>
             <dd>{show(spread)}</dd>
           </dl>
-          {report.source && <p className="xsmall faint" style={{ marginTop: 16 }}>All from {report.source.name}, {report.source.pair}.</p>}
+          {report.source && (
+            <p className="xsmall faint" style={{ marginTop: 16 }}>
+              All from {report.source.name}, {report.source.pair}.
+            </p>
+          )}
         </>
       )}
     </section>
@@ -295,7 +351,9 @@ function PriceCheck({ report }: { report: QuoteReport | null }) {
   return (
     <section className="card" aria-labelledby="check-title">
       <div className="card-head">
-        <h2 id="check-title">Price check</h2>
+        <h2 id="check-title">
+          <Term id="cross-check" />
+        </h2>
       </div>
       <p className="small" style={{ color: status === 'disagree' ? 'var(--warn)' : undefined }}>
         {summary}

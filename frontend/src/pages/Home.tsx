@@ -1,5 +1,6 @@
 import { api } from '../api'
 import { CoinSearch } from '../components/CoinSearch'
+import { WatchlistsCard } from '../components/Watchlists'
 import { clockTime } from '../format'
 import { useApi } from '../hooks'
 
@@ -13,12 +14,15 @@ export function Home() {
         </p>
       </div>
       <div className="grid-2">
-        <section className="card" aria-labelledby="find-title">
-          <div className="card-head">
-            <h2 id="find-title">Find a coin</h2>
-          </div>
-          <CoinSearch />
-        </section>
+        <div className="stack" style={{ gap: 24 }}>
+          <WatchlistsCard />
+          <section className="card" aria-labelledby="find-title">
+            <div className="card-head">
+              <h2 id="find-title">Find a coin</h2>
+            </div>
+            <CoinSearch />
+          </section>
+        </div>
         <ExchangeStatusCard />
       </div>
     </>

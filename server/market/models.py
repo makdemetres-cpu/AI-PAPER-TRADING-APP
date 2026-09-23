@@ -6,6 +6,7 @@ SOURCE_NAMES = {
     "kraken": "Kraken",
     "alpaca": "Alpaca",
     "ecb": "European Central Bank",
+    "coingecko": "CoinGecko",
 }
 
 

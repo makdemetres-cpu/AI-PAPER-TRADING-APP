@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from .api import market, system
+from .api import market, system, watchlists
 from .config import LOCAL_HOSTS, Settings, load_settings
 from .db import Database
 from .http import make_client
@@ -55,7 +55,10 @@ def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTrans
     app.state.settings = settings
     app.state.db = db
     app.state.market = MarketService(
-        client, alpaca_key_id=settings.alpaca_key_id, alpaca_secret=settings.alpaca_secret
+        client,
+        alpaca_key_id=settings.alpaca_key_id,
+        alpaca_secret=settings.alpaca_secret,
+        coingecko_key=settings.coingecko_key,
     )
 
     @app.exception_handler(NotFoundError)
@@ -68,6 +71,7 @@ def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTrans
 
     app.include_router(system.router)
     app.include_router(market.router)
+    app.include_router(watchlists.router)
 
     if WEB_DIR.exists():
         app.mount("/assets", StaticFiles(directory=WEB_DIR / "assets"), name="web-assets")
