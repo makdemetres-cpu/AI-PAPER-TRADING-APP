@@ -35,7 +35,7 @@ The app is being built in stages. Stages 1 to 4 are done.
 - 140 trading and crypto words in 10 groups, from “coin” and “spread” to “Form 13F” and “liquidation”.
 - Each word has an original picture, a simple explanation first, a proper definition, an example, and links to related words.
 - Search, filter by group, or jump by letter. Every **?** in the app opens the word and links to its full card.
-- Definitions were checked against official sources (SEC, Investor.gov, FINRA, House and Senate ethics rules) where they cover the topic. Filing rules are stated as those sources give them (for example, 13F: managers with $100 million or more, due 45 days after quarter end).
+- The filing rules (Form 13F, Form 4, Congress trade reports) were checked against SEC and Investor.gov material, for example 13F: managers with $100 million or more, due 45 days after quarter end. The other definitions follow standard usage. If you spot a mistake, each word is one entry in `frontend/src/glossary/terms.ts`.
 
 **Honest data**
 - Prices in US dollars or euros (switch at the top right).
