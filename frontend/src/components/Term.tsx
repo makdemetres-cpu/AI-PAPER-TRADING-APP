@@ -1,5 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { TermPicture } from '../glossary/pictures'
 import { TERMS_BY_ID } from '../glossary/terms'
+import { Link } from '../router'
 
 export function Term({ id, children }: { id: string; children?: ReactNode }) {
   const term = TERMS_BY_ID[id]
@@ -14,7 +16,7 @@ export function Term({ id, children }: { id: string; children?: ReactNode }) {
     if (!open || !el) return
     el.style.left = '0px'
     const rect = el.getBoundingClientRect()
-    const overflow = rect.right - (window.innerWidth - 16)
+    const overflow = rect.right - (document.documentElement.clientWidth - 16)
     if (overflow > 0) el.style.left = `${-Math.min(overflow, rect.left - 16)}px`
   }, [open])
 
@@ -56,6 +58,7 @@ export function Term({ id, children }: { id: string; children?: ReactNode }) {
       </button>
       {open && (
         <span ref={pop} className="term-pop" id={popId} role="dialog" aria-label={term.term}>
+          <TermPicture id={term.id} />
           <strong className="term-pop-title">{term.term}</strong>
           <span className="term-pop-eli5">{term.eli5}</span>
           <span className="term-pop-def">{term.definition}</span>
@@ -63,6 +66,9 @@ export function Term({ id, children }: { id: string; children?: ReactNode }) {
             <span className="faint">Example: </span>
             {term.example}
           </span>
+          <Link href={`/learn/${term.id}`} className="small" onClick={() => setOpen(false)}>
+            More in Learn the Words
+          </Link>
         </span>
       )}
     </span>

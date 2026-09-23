@@ -24,6 +24,7 @@
   --info-soft: #f0f2f5;
   --focus: #3e4fd8;
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --pic-muted: #d0d5dd;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -71,6 +72,7 @@
     --info-soft: #1f242f;
     --focus: #97a4fa;
     --shadow: none;
+    --pic-muted: #5d6679;
     color-scheme: dark;
   }
 }
@@ -99,6 +101,7 @@
   --info-soft: #1f242f;
   --focus: #97a4fa;
   --shadow: none;
+  --pic-muted: #5d6679;
   color-scheme: dark;
 }
 
@@ -1035,4 +1038,251 @@ a.btn:hover {
 
 .suggestion:hover {
   background: var(--surface-sunken);
+}
+
+/* Glossary pictures */
+
+.pic {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pic .pic-bg {
+  fill: var(--accent-soft);
+}
+
+.pic .k,
+.pic .as,
+.pic .gs,
+.pic .ls,
+.pic .ws,
+.pic .ringline,
+.pic .kstroke-dark {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pic .k {
+  stroke: var(--text-2);
+  stroke-width: 3;
+}
+
+.pic .as {
+  stroke: var(--accent);
+  stroke-width: 4;
+}
+
+.pic .gs {
+  stroke: var(--gain);
+  stroke-width: 4;
+}
+
+.pic .ls {
+  stroke: var(--loss);
+  stroke-width: 4;
+}
+
+.pic .ws {
+  stroke: var(--warn);
+  stroke-width: 4;
+}
+
+.pic .thin {
+  stroke-width: 2;
+}
+
+.pic .thick {
+  stroke-width: 5;
+}
+
+.pic .dash {
+  stroke-dasharray: 5 5;
+}
+
+.pic .kf {
+  fill: var(--text-2);
+}
+
+.pic .a {
+  fill: var(--accent);
+}
+
+.pic .sf {
+  fill: var(--surface);
+  stroke: var(--text-2);
+  stroke-width: 2.5;
+}
+
+.pic .g {
+  fill: var(--gain);
+}
+
+.pic .l {
+  fill: var(--loss);
+}
+
+.pic .w {
+  fill: var(--warn);
+}
+
+.pic .m {
+  fill: var(--pic-muted);
+}
+
+.pic .pizza {
+  fill: var(--warn-soft);
+}
+
+.pic .ring {
+  fill: none;
+  stroke: var(--surface);
+  stroke-width: 2;
+  opacity: 0.55;
+}
+
+.pic .ringfill {
+  fill: var(--surface);
+}
+
+.pic .ringline {
+  stroke: var(--surface);
+  stroke-width: 2.5;
+}
+
+.pic .kstroke-dark {
+  stroke: #101828;
+  stroke-width: 3;
+}
+
+.pic .kf-dark {
+  fill: #101828;
+}
+
+.pic text {
+  font-family: var(--font);
+  font-weight: 700;
+}
+
+.pic .t {
+  fill: var(--surface);
+}
+
+.pic .tk {
+  fill: var(--text);
+}
+
+.pic .t-accent {
+  fill: var(--accent);
+}
+
+/* Learn the Words */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chip {
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: var(--text-sm);
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.az {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.az button {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.az button:hover {
+  background: var(--accent-soft);
+}
+
+.az button:disabled {
+  color: var(--text-3);
+  opacity: 0.5;
+  cursor: default;
+  background: transparent;
+}
+
+.term-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-5);
+}
+
+.term-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  scroll-margin-top: 24px;
+}
+
+.term-card:target,
+.term-card.highlight {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.term-card .pic {
+  border-radius: var(--radius-sm);
+}
+
+.letter-heading {
+  grid-column: 1 / -1;
+  font-size: var(--text-lg);
+  font-weight: 650;
+  color: var(--text-2);
+  scroll-margin-top: 24px;
+  margin-top: var(--space-2);
+}
+
+.related {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.related a {
+  font-size: var(--text-xs);
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  color: var(--text-2);
+}
+
+.related a:hover {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.term-pop .pic {
+  width: 144px;
+  border-radius: var(--radius-sm);
 }

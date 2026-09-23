@@ -8,7 +8,7 @@ with pretend money. It never places real trades.
 
 ## What works so far
 
-The app is being built in stages. Stages 1 to 3 are done.
+The app is being built in stages. Stages 1 to 4 are done.
 
 **Research**
 - Search any coin traded on Coinbase or Kraken.
@@ -31,6 +31,12 @@ The app is being built in stages. Stages 1 to 3 are done.
 - A trade journal: write why you traded, see how the price moved since, and add a look-back note.
 - Start over at any time with a new balance.
 
+**Learn the Words**
+- 140 trading and crypto words in 10 groups, from “coin” and “spread” to “Form 13F” and “liquidation”.
+- Each word has an original picture, a simple explanation first, a proper definition, an example, and links to related words.
+- Search, filter by group, or jump by letter. Every **?** in the app opens the word and links to its full card.
+- Definitions were checked against official sources (SEC, Investor.gov, FINRA, House and Senate ethics rules) where they cover the topic. Filing rules are stated as those sources give them (for example, 13F: managers with $100 million or more, due 45 days after quarter end).
+
 **Honest data**
 - Prices in US dollars or euros (switch at the top right).
 - A label on every price: **Live**, **Stale**, **End of day** or **No data**, plus the exchange, the market and the time.
@@ -38,8 +44,7 @@ The app is being built in stages. Stages 1 to 3 are done.
 - Warnings for impossible prices, missing volume, unusual 24-hour moves, stablecoins losing their peg, and exchanges that don't answer.
 - Exchange status for Coinbase and Kraken on the Home page.
 
-Still to come: the full Learn the Words glossary with pictures, the AI assistant, and copy-trading
-research (fund holdings and Congress trades).
+Still to come: the AI assistant and copy-trading research (fund holdings and Congress trades).
 
 ## Start the app (Windows)
 
@@ -130,6 +135,6 @@ npm run format                # Prettier
 - Paper trading math is in `server/paper/engine.py`, using exact decimals. Cash and holdings are always recomputed from the list of fills, so they can't drift apart.
 - Frontend: React, TypeScript, Vite, [TradingView Lightweight Charts](https://github.com/tradingview/lightweight-charts). Code in `frontend/`.
 - `server/web` holds the built frontend and is committed, so people running the app don't need Node.
-- Glossary words live in `frontend/src/glossary/terms.ts`. Add a term there and use `<Term id="..." />`.
+- Glossary words live in `frontend/src/glossary/terms.ts` and their pictures in `frontend/src/glossary/pictures.tsx`. Add both, then use `<Term id="..." />` anywhere. `tests/test_glossary.py` checks that every word has a picture, every link points to a real word, and the text has no em dashes.
 - Tests use fake exchanges in `tests/fakes.py` whose replies follow each provider's documented format.
   `python -m server.check` tests the real services.

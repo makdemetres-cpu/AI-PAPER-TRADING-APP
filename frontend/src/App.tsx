@@ -1,12 +1,15 @@
+import { lazy, Suspense } from 'react'
 import { CurrencyToggle, ThemeToggle } from './components/bits'
-import { CoinPage } from './pages/CoinPage'
 import { Home } from './pages/Home'
-import { PaperTrading } from './pages/PaperTrading'
 import { Later } from './pages/Later'
 import { Research } from './pages/Research'
 import { Settings } from './pages/Settings'
 import { usePrefs } from './prefs'
 import { Link, usePath } from './router'
+
+const CoinPage = lazy(() => import('./pages/CoinPage').then((m) => ({ default: m.CoinPage })))
+const Learn = lazy(() => import('./pages/Learn').then((m) => ({ default: m.Learn })))
+const PaperTrading = lazy(() => import('./pages/PaperTrading').then((m) => ({ default: m.PaperTrading })))
 
 const NAV = [
   { href: '/', label: 'Home' },
@@ -46,9 +49,7 @@ function Page({ path }: { path: string }) {
         />
       )
     case '/learn':
-      return (
-        <Later title="Learn the Words" summary="Every trading word the app uses, explained simply with a picture." />
-      )
+      return <Learn focusId={path.match(/^\/learn\/([a-z0-9-]+)\/?$/)?.[1] ?? null} />
     case '/settings':
       return <Settings />
     default:
@@ -91,7 +92,9 @@ export function App() {
           <ThemeToggle />
         </header>
         <main className="content">
-          <Page path={path} />
+          <Suspense fallback={<div className="skeleton" style={{ height: 240 }} />}>
+            <Page path={path} />
+          </Suspense>
         </main>
         <footer className="disclaimer">
           Research and practice tool. Paper money only, no real trades. Not financial advice: even correct data can’t
