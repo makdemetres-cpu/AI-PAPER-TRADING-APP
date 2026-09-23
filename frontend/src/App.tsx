@@ -1,6 +1,7 @@
 import { CurrencyToggle, ThemeToggle } from './components/bits'
 import { CoinPage } from './pages/CoinPage'
 import { Home } from './pages/Home'
+import { PaperTrading } from './pages/PaperTrading'
 import { Later } from './pages/Later'
 import { Research } from './pages/Research'
 import { Settings } from './pages/Settings'
@@ -29,9 +30,7 @@ function Page({ path }: { path: string }) {
     case '/research':
       return <Research />
     case '/paper':
-      return (
-        <Later title="Paper Trading" summary="Practice buying and selling with pretend money, using real prices." />
-      )
+      return <PaperTrading />
     case '/copy':
       return (
         <Later

@@ -8,7 +8,7 @@ with pretend money. It never places real trades.
 
 ## What works so far
 
-The app is being built in stages. Stages 1 and 2 are done.
+The app is being built in stages. Stages 1 to 3 are done.
 
 **Research**
 - Search any coin traded on Coinbase or Kraken.
@@ -19,6 +19,18 @@ The app is being built in stages. Stages 1 and 2 are done.
 - Watchlists: make as many lists as you like, add coins from any coin page, and see each coin's price and freshness at a glance.
 - A **?** next to every money word. Click it for a plain explanation, a proper definition and an example.
 
+**Paper trading**
+- Start a practice account with the amount and currency you choose (default $100,000), plus a fee and slippage setting.
+- Market orders fill at the live ask (buying) or bid (selling), made slightly worse by your slippage setting, plus the fee.
+- Limit orders wait until the price reaches your limit. They're checked every 30 seconds **while the app is open**; price moves while it's closed don't count. Cash or coins for waiting orders are set aside.
+- Before every trade you see a confirmation with the exchange, the market, the trade time, the estimated price, fee and total. If the price moves more than 1% before you confirm, the app asks you to review again.
+- Trades are refused when the price is stale, missing, or the exchanges disagree, because a practice fill at a doubtful price teaches the wrong lesson.
+- Portfolio: holdings with average cost, current value, profit or loss, allocation, cash, realized profit and fees paid.
+- Value over time, rebuilt from your trades and each day's closing price.
+- Order history showing where each fill price came from.
+- A trade journal: write why you traded, see how the price moved since, and add a look-back note.
+- Start over at any time with a new balance.
+
 **Honest data**
 - Prices in US dollars or euros (switch at the top right).
 - A label on every price: **Live**, **Stale**, **End of day** or **No data**, plus the exchange, the market and the time.
@@ -26,8 +38,8 @@ The app is being built in stages. Stages 1 and 2 are done.
 - Warnings for impossible prices, missing volume, unusual 24-hour moves, stablecoins losing their peg, and exchanges that don't answer.
 - Exchange status for Coinbase and Kraken on the Home page.
 
-Still to come: paper trading, the full Learn the Words glossary with pictures, the AI assistant, and
-copy-trading research (fund holdings and Congress trades).
+Still to come: the full Learn the Words glossary with pictures, the AI assistant, and copy-trading
+research (fund holdings and Congress trades).
 
 ## Start the app (Windows)
 
@@ -114,7 +126,8 @@ npm run build                 # builds into server/web, which the app serves
 npm run format                # Prettier
 ```
 
-- Backend: Python, FastAPI, httpx, SQLite (`data/app.db`, holds settings and watchlists). Code in `server/`.
+- Backend: Python, FastAPI, httpx, SQLite (`data/app.db`: settings, watchlists, practice accounts, orders and fills). Code in `server/`.
+- Paper trading math is in `server/paper/engine.py`, using exact decimals. Cash and holdings are always recomputed from the list of fills, so they can't drift apart.
 - Frontend: React, TypeScript, Vite, [TradingView Lightweight Charts](https://github.com/tradingview/lightweight-charts). Code in `frontend/`.
 - `server/web` holds the built frontend and is committed, so people running the app don't need Node.
 - Glossary words live in `frontend/src/glossary/terms.ts`. Add a term there and use `<Term id="..." />`.

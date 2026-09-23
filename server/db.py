@@ -24,6 +24,55 @@ MIGRATIONS = [
         PRIMARY KEY (watchlist_id, symbol)
     );
     """,
+    """
+    CREATE TABLE paper_accounts (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        kind TEXT NOT NULL DEFAULT 'manual',
+        currency TEXT NOT NULL,
+        starting_cash TEXT NOT NULL,
+        fee_pct TEXT NOT NULL,
+        slippage_pct TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        closed_at TEXT
+    );
+    CREATE TABLE paper_orders (
+        id INTEGER PRIMARY KEY,
+        account_id INTEGER NOT NULL REFERENCES paper_accounts(id) ON DELETE CASCADE,
+        symbol TEXT NOT NULL,
+        side TEXT NOT NULL CHECK (side IN ('buy', 'sell')),
+        type TEXT NOT NULL CHECK (type IN ('market', 'limit')),
+        quantity TEXT NOT NULL,
+        limit_price TEXT,
+        status TEXT NOT NULL CHECK (status IN ('open', 'filled', 'cancelled')),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        why TEXT NOT NULL DEFAULT '',
+        review TEXT NOT NULL DEFAULT '',
+        reviewed_at TEXT
+    );
+    CREATE TABLE paper_fills (
+        id INTEGER PRIMARY KEY,
+        order_id INTEGER NOT NULL REFERENCES paper_orders(id) ON DELETE CASCADE,
+        account_id INTEGER NOT NULL REFERENCES paper_accounts(id) ON DELETE CASCADE,
+        symbol TEXT NOT NULL,
+        side TEXT NOT NULL,
+        quantity TEXT NOT NULL,
+        price TEXT NOT NULL,
+        fee TEXT NOT NULL,
+        filled_at TEXT NOT NULL,
+        price_basis TEXT NOT NULL,
+        market_price TEXT NOT NULL,
+        source TEXT NOT NULL,
+        source_pair TEXT NOT NULL,
+        observed_at TEXT,
+        converted INTEGER NOT NULL DEFAULT 0,
+        fx_rate TEXT,
+        fx_date TEXT
+    );
+    CREATE INDEX paper_orders_account ON paper_orders(account_id, status);
+    CREATE INDEX paper_fills_account ON paper_fills(account_id, filled_at);
+    """,
 ]
 
 DEFAULT_SETTINGS = {"currency": "USD"}

@@ -295,6 +295,102 @@ export const TERMS: Term[] = [
     example: 'CoinGecko’s bitcoin price is an average across many exchanges, weighted by how much each one trades.',
     related: ['exchange', 'market-cap'],
   },
+  {
+    id: 'market-order',
+    term: 'Market order',
+    category: 'Buying & Selling',
+    eli5: 'A market order says: buy (or sell) right now at whatever the price is. It’s fast, but you don’t pick the exact price.',
+    definition:
+      'An order that fills straight away at the best price available. You may pay a bit more, or get a bit less, than the last price you saw.',
+    example: 'A market buy for 0.1 BTC fills at the current ask, for example $65,001.',
+    related: ['limit-order', 'ask', 'slippage'],
+  },
+  {
+    id: 'limit-order',
+    term: 'Limit order',
+    category: 'Buying & Selling',
+    eli5: 'A limit order says: only buy if the price drops to my number, or only sell if it rises to my number. You pick the price, but it might never happen.',
+    definition:
+      'An order to buy at or below, or sell at or above, a price you set. It waits until the market reaches that price and may never fill. In this app, waiting orders are only checked while the app is open.',
+    example: 'A limit buy at $60,000 waits until someone sells at $60,000 or less.',
+    related: ['market-order', 'bid', 'ask'],
+  },
+  {
+    id: 'slippage',
+    term: 'Slippage',
+    category: 'Buying & Selling',
+    eli5: 'Slippage is when you pay a little more than the price you saw, because the price moved or there weren’t enough sellers at that price.',
+    definition:
+      'The difference between the price you expected and the price you actually get. This app adds a small slippage setting to every market order so practice results aren’t better than real life.',
+    example: 'With 0.1% slippage, a $65,000 ask becomes a $65,065 fill.',
+    related: ['market-order', 'spread', 'trading-fee'],
+  },
+  {
+    id: 'trading-fee',
+    term: 'Trading fee',
+    category: 'Buying & Selling',
+    eli5: 'The exchange charges a small fee every time you trade, like a ticket to get in.',
+    definition:
+      'A charge the exchange takes on each trade, usually a percentage of its value. Real fees depend on the exchange and on how much you trade.',
+    example: 'A 0.5% fee on a $1,000 purchase costs $5.',
+    related: ['slippage', 'spread'],
+  },
+  {
+    id: 'portfolio',
+    term: 'Portfolio',
+    category: 'Basics',
+    eli5: 'Your portfolio is everything you own, all together, like all the toys in your toy box.',
+    definition: 'All your holdings plus your cash, and what they’re worth together.',
+    example: '$60,000 in cash plus 0.5 BTC worth $32,500 is a $92,500 portfolio.',
+    related: ['allocation', 'unrealized'],
+  },
+  {
+    id: 'unrealized',
+    term: 'Unrealized profit or loss',
+    category: 'Risk',
+    eli5: 'How much you’d win or lose if you sold now. It isn’t real yet, because you haven’t sold.',
+    definition:
+      'What a holding is worth now minus what you paid for it, including fees. It changes with the price until you sell.',
+    example: 'Bought for $6,500 and now worth $7,000: $500 unrealized profit.',
+    related: ['realized', 'average-cost'],
+  },
+  {
+    id: 'realized',
+    term: 'Realized profit or loss',
+    category: 'Risk',
+    eli5: 'Profit or loss that’s locked in because you sold.',
+    definition: 'What you got for coins you sold, after fees, minus what those coins cost you.',
+    example: 'You sell coins that cost you $6,500 and get $7,000 after fees: $500 realized profit.',
+    related: ['unrealized', 'average-cost'],
+  },
+  {
+    id: 'average-cost',
+    term: 'Average cost',
+    category: 'Buying & Selling',
+    eli5: 'If you bought the same coin at different prices, the average cost is the in-between price you paid for each one.',
+    definition: 'What you paid for the coins you still hold, including buy fees, divided by how many you hold.',
+    example: 'Buying 1 BTC at $60,000 and 1 at $70,000 gives an average cost of $65,000, plus fees.',
+    related: ['unrealized', 'realized'],
+  },
+  {
+    id: 'allocation',
+    term: 'Allocation',
+    category: 'Risk',
+    eli5: 'Allocation shows how your money is split up, like how many slices of a pizza go to each friend.',
+    definition: 'Each holding’s share of your portfolio’s total value.',
+    example: '$25,000 in BTC out of $100,000 in total is a 25% allocation.',
+    related: ['portfolio'],
+  },
+  {
+    id: 'trade-journal',
+    term: 'Trade journal',
+    category: 'Basics',
+    eli5: 'A trade journal is a diary for your trades: why you made each one, and later, how it went.',
+    definition: 'Notes you write when you trade and read again later, to learn which reasons worked.',
+    example:
+      'You write “bought because it fell 10% this week”, then a month later check whether that was a good reason.',
+    related: ['paper-trading'],
+  },
 ]
 
 export const TERMS_BY_ID: Record<string, Term> = Object.fromEntries(TERMS.map((t) => [t.id, t]))

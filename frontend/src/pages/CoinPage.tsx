@@ -136,7 +136,12 @@ function PriceHeader({
             )}
           </h1>
         </div>
-        <WatchlistButton symbol={symbol} />
+        <div className="row" style={{ gap: 8 }}>
+          <Link href={`/paper?symbol=${symbol}`} className="btn">
+            Paper trade
+          </Link>
+          <WatchlistButton symbol={symbol} />
+        </div>
       </div>
 
       {!report && loading && <div className="skeleton" style={{ height: 52, width: 260 }} />}

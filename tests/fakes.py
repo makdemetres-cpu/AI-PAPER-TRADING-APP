@@ -42,6 +42,7 @@ class FakeMarkets:
     trade_age_seconds: float = 2.0
     open_24h: dict = field(default_factory=lambda: {"BTC-USD": 64000.0, "SOL-USD": 150.0, "ETH-USD": 2400.0, "USDT-USD": 1.0})
     usd_per_eur: float = 1.08
+    real_clock: bool = False
     requests: list = field(default_factory=list)
 
     def transport(self) -> httpx.MockTransport:
@@ -68,7 +69,8 @@ class FakeMarkets:
         return httpx.Response(404)
 
     def _trade_time(self) -> datetime:
-        return NOW - timedelta(seconds=self.trade_age_seconds)
+        now = datetime.now(timezone.utc) if self.real_clock else NOW
+        return now - timedelta(seconds=self.trade_age_seconds)
 
     def _coinbase(self, request: httpx.Request) -> httpx.Response:
         if not self.coinbase_up:
